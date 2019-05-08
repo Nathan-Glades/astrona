@@ -3,6 +3,8 @@ import socket, json
 class server:
     def __init__(self, server_address):
         self.server_address = (server_address, 8284)
+        self.logged_in = False
+        self.session_key = ''
     
     def liveconnection(self):
         try:
@@ -37,3 +39,16 @@ class server:
         
         data = json.loads(s.recv(2048).decode('utf-8'))
         return data['param']
+    
+    def login(self, **kwargs):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        request = {'type': 'request.auth.login', 'param': {'uid': kwargs['username'], 'pwd': kwargs['password']}}
+
+        s.connect(self.server_address)
+        s.send(bytes(str(request), 'utf-8'))
+        
+        data = json.loads(s.recv(2048).decode('utf-8'))
+        self.session_key = data['param']['s_key']
+        self.logged_in = data['state'] == 200
+
+        return data['state'] == 200
